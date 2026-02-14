@@ -60,7 +60,7 @@ function Register() {
       
       // 延迟跳转到登录页
       setTimeout(() => {
-        Taro.navigateTo({ url: '/pages/login/index' })
+        Taro.navigateBack()
       }, 1500)
     } catch (error) {
       console.error('注册失败:', error)

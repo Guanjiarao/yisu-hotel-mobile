@@ -4,6 +4,12 @@ export default defineAppConfig({
     'pages/login/index',
     'pages/register/index'
   ],
+  requiredPrivateInfos: ['getLocation'],
+  permission: {
+    "scope.userLocation": {
+      desc: "用于为您自动定位默认城市，推荐附近酒店"
+    }
+  },
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#fff',
