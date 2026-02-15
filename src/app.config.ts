@@ -2,7 +2,8 @@ export default defineAppConfig({
   pages: [
     'pages/index/index',
     'pages/login/index',
-    'pages/register/index'
+    'pages/register/index',
+    'pages/hotel-lists/index'
   ],
   requiredPrivateInfos: ['getLocation'],
   permission: {
