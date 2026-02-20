@@ -1,5 +1,17 @@
 import { View, Input, Button, Image } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
+import { useState } from 'react'
+// ✅ 只引入 NutUI 的 Calendar，不需要 Popup！
+import { Calendar } from '@nutui/nutui-react-taro'
+
+// 👇👇👇 暴力注入防丢装甲 👇👇👇
+// 1. 强行在页面级别加载全局样式
+import '@nutui/nutui-react-taro/dist/style.css'
+// 2. 强行单点加载日历组件的专属样式（双保险！）
+import '@nutui/nutui-react-taro/dist/esm/calendar/style/css'
+import '@nutui/nutui-react-taro/dist/esm/popup/style/css'
+// 👆👆👆 暴力注入防丢装甲 👆👆👆
+
 import './index.scss'
 import { useAuthStore } from '../../store/auth'
 import { useLocationStore } from '../../store/location'
@@ -8,10 +20,11 @@ import { useSearchStore } from '../../store/search'
 function Index() {
   const tags = ['亲子', '豪华', '商务', '度假', '温泉', '海景']
 
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+
   const userInfo = useAuthStore((s) => s.userInfo)
   const checkLoginStatus = useAuthStore((s) => s.checkLoginStatus)
   const locateAndRegeo = useLocationStore((s) => s.locateAndRegeo)
-  const address = useLocationStore((s) => s.address)
   const locating = useLocationStore((s) => s.locating)
 
   const filters = useSearchStore((s) => s.filters)
@@ -19,9 +32,6 @@ function Index() {
   const setKeyword = useSearchStore((s) => s.setKeyword)
   const toggleTag = useSearchStore((s) => s.toggleTag)
   const setDateRange = useSearchStore((s) => s.setDateRange)
-
-
-  const showCity = address?.city || '选择城市'
 
   useDidShow(() => {
     checkLoginStatus()
@@ -34,18 +44,26 @@ function Index() {
   })
 
   const handlePickCity = () => {
-    // 你后续做城市选择页就跳转，这里先用 toast 提示
     Taro.showToast({ title: '这里可以跳转城市选择页', icon: 'none' })
-    // Taro.navigateTo({ url: '/pages/city/index' })
-  }
-
-  const handleChooseHotCity = (city: string) => {
-    setCity({ city })
   }
 
   const handlePickDate = () => {
-    setDateRange({ checkIn: '2026-02-07', checkOut: '2026-02-08' })
-    Taro.showToast({ title: '已选择日期', icon: 'none' })
+    setIsCalendarOpen(true)
+  }
+
+  // ✅ 完美适配 NutUI 的确认逻辑
+  const handleConfirmDate = (param: any) => {
+    // NutUI 返回的是字符串数组，例如 ['2026-02-17', '2026-02-19']
+    if (param && param.length === 2) {
+      // 兼容处理：确保取到的是字符串日期
+      let checkIn = typeof param[0] === 'string' ? param[0] : (param[0]?.[3] || '')
+      let checkOut = typeof param[1] === 'string' ? param[1] : (param[1]?.[3] || '')
+      
+      if (checkIn && checkOut) {
+        setDateRange({ checkIn, checkOut })
+      }
+    }
+    setIsCalendarOpen(false)
   }
 
   const handleSearch = () => {
@@ -67,7 +85,6 @@ function Index() {
     Taro.navigateTo({ url: `/pages/hotel-lists/index?${params.toString()}` })
   }
 
-
   const handleGoLogin = () => {
     Taro.navigateTo({ url: '/pages/login/index' })
   }
@@ -78,6 +95,18 @@ function Index() {
     { city: '三亚', count: '800+家酒店' },
     { city: '成都', count: '950+家酒店' },
   ]
+
+  // ✅ 生成 NutUI 需要的起始和结束日期格式 (YYYY-MM-DD)
+  const getStartDate = () => {
+    const date = new Date()
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+
+  const getEndDate = () => {
+    const date = new Date()
+    date.setMonth(date.getMonth() + 6)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
 
   return (
     <View className="hotel-home">
@@ -117,7 +146,6 @@ function Index() {
             </View>
           </View>
 
-
           <View className="divider" />
 
           <View className="form-item" onClick={handlePickDate}>
@@ -132,7 +160,6 @@ function Index() {
             </View>
           </View>
 
-
           <View className="divider" />
 
           <View className="search-input-wrapper">
@@ -144,7 +171,6 @@ function Index() {
               value={filters.keyword}
               onInput={(e) => setKeyword(e.detail.value)}
             />
-
           </View>
 
           <View className="tags-section">
@@ -162,13 +188,13 @@ function Index() {
                   </View>
                 )
               })}
-
             </View>
           </View>
 
           <Button className="search-button" onClick={handleSearch}>查询酒店</Button>
         </View>
 
+        {/* 👇 看这里！你的地址标签完好无损地在这里！👇 */}
         <View className="hot-destinations">
           <View className="section-title">热门目的地</View>
           <View className="destinations-grid">
@@ -181,6 +207,16 @@ function Index() {
           </View>
         </View>
       </View>
+
+      {/* ✅ 去掉了惹祸的 Popup，直接用极其干净的 NutUI 日历 */}
+      <Calendar
+        visible={isCalendarOpen}
+        type="range"
+        startDate={getStartDate()}
+        endDate={getEndDate()}
+        onClose={() => setIsCalendarOpen(false)}
+        onConfirm={handleConfirmDate}
+      />
     </View>
   )
 }
