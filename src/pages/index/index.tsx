@@ -1,5 +1,12 @@
-import { View, Input, Button, Image } from '@tarojs/components'
+import { View, Input, Button, Image, Picker, Text } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
+import { useState } from 'react'
+import { Calendar } from '@nutui/nutui-react-taro'
+
+import '@nutui/nutui-react-taro/dist/style.css'
+import '@nutui/nutui-react-taro/dist/esm/calendar/style/css'
+import '@nutui/nutui-react-taro/dist/esm/popup/style/css'
+
 import './index.scss'
 import { useAuthStore } from '../../store/auth'
 import { useLocationStore } from '../../store/location'
@@ -8,10 +15,11 @@ import { useSearchStore } from '../../store/search'
 function Index() {
   const tags = ['亲子', '豪华', '商务', '度假', '温泉', '海景']
 
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+
   const userInfo = useAuthStore((s) => s.userInfo)
   const checkLoginStatus = useAuthStore((s) => s.checkLoginStatus)
   const locateAndRegeo = useLocationStore((s) => s.locateAndRegeo)
-  const address = useLocationStore((s) => s.address)
   const locating = useLocationStore((s) => s.locating)
 
   const filters = useSearchStore((s) => s.filters)
@@ -19,9 +27,6 @@ function Index() {
   const setKeyword = useSearchStore((s) => s.setKeyword)
   const toggleTag = useSearchStore((s) => s.toggleTag)
   const setDateRange = useSearchStore((s) => s.setDateRange)
-
-
-  const showCity = address?.city || '选择城市'
 
   useDidShow(() => {
     checkLoginStatus()
@@ -33,19 +38,59 @@ function Index() {
     })
   })
 
-  const handlePickCity = () => {
-    // 你后续做城市选择页就跳转，这里先用 toast 提示
-    Taro.showToast({ title: '这里可以跳转城市选择页', icon: 'none' })
-    // Taro.navigateTo({ url: '/pages/city/index' })
-  }
-
-  const handleChooseHotCity = (city: string) => {
-    setCity({ city })
+  const handleCityChange = (e) => {
+    const selectedRegion = e.detail.value
+    console.log('用户选择的地区:', selectedRegion)
+    
+    if (selectedRegion && selectedRegion.length > 0) {
+      // 提取市级名称（index 1）
+      // 兼容直辖市：如果 index 1 为空或与 index 0 相同，则使用 index 0
+      let cityName = selectedRegion[1] || selectedRegion[0]
+      
+      // 如果是直辖市（省市同名），使用第一个元素
+      if (selectedRegion[0] === selectedRegion[1]) {
+        cityName = selectedRegion[0]
+      }
+      
+      // 确保城市名称包含"市"字（如果原本就有则不重复添加）
+      if (cityName && !cityName.endsWith('市') && !cityName.endsWith('自治区') && !cityName.endsWith('特别行政区')) {
+        // 对于一些特殊情况，保持原样
+        if (!['北京', '上海', '天津', '重庆'].includes(cityName)) {
+          // 非直辖市的情况，如果后端需要带"市"，这里可以添加
+          // cityName = cityName + '市'
+        }
+      }
+      
+      console.log('最终提取的城市名:', cityName)
+      
+      // 调用 Store 的方法更新城市
+      setCity({ city: cityName })
+      
+      Taro.showToast({ 
+        title: `已切换至${cityName}`, 
+        icon: 'success',
+        duration: 1500
+      })
+    }
   }
 
   const handlePickDate = () => {
-    setDateRange({ checkIn: '2026-02-07', checkOut: '2026-02-08' })
-    Taro.showToast({ title: '已选择日期', icon: 'none' })
+    setIsCalendarOpen(true)
+  }
+
+  // ✅ 完美适配 NutUI 的确认逻辑
+  const handleConfirmDate = (param: any) => {
+    // NutUI 返回的是字符串数组，例如 ['2026-02-17', '2026-02-19']
+    if (param && param.length === 2) {
+      // 兼容处理：确保取到的是字符串日期
+      let checkIn = typeof param[0] === 'string' ? param[0] : (param[0]?.[3] || '')
+      let checkOut = typeof param[1] === 'string' ? param[1] : (param[1]?.[3] || '')
+      
+      if (checkIn && checkOut) {
+        setDateRange({ checkIn, checkOut })
+      }
+    }
+    setIsCalendarOpen(false)
   }
 
   const handleSearch = () => {
@@ -67,7 +112,6 @@ function Index() {
     Taro.navigateTo({ url: `/pages/hotel-lists/index?${params.toString()}` })
   }
 
-
   const handleGoLogin = () => {
     Taro.navigateTo({ url: '/pages/login/index' })
   }
@@ -78,6 +122,18 @@ function Index() {
     { city: '三亚', count: '800+家酒店' },
     { city: '成都', count: '950+家酒店' },
   ]
+
+  // ✅ 生成 NutUI 需要的起始和结束日期格式 (YYYY-MM-DD)
+  const getStartDate = () => {
+    const date = new Date()
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+
+  const getEndDate = () => {
+    const date = new Date()
+    date.setMonth(date.getMonth() + 6)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
 
   return (
     <View className="hotel-home">
@@ -105,18 +161,25 @@ function Index() {
 
       <View className="main-content">
         <View className="search-card">
-          <View className="form-item" onClick={handlePickCity}>
-            <View className="form-icon">📍</View>
-            <View className="form-content">
-              <View className="form-label">目的地</View>
-              {locating ? (
-                <View className="debug-text">定位中...</View>
-              ) : (
-                <View className="form-value">{filters.city || '选择城市'}</View>
-              )}
+          <Picker 
+            mode="region" 
+            onChange={handleCityChange}
+          >
+            <View className="form-item">
+              <View className="form-icon">📍</View>
+              <View className="form-content">
+                <View className="form-label">目的地</View>
+                {locating ? (
+                  <View className="debug-text">定位中...</View>
+                ) : (
+                  <View className="form-value">
+                    {filters.city || '选择城市'}
+                    <Text className="picker-arrow">▼</Text>
+                  </View>
+                )}
+              </View>
             </View>
-          </View>
-
+          </Picker>
 
           <View className="divider" />
 
@@ -132,7 +195,6 @@ function Index() {
             </View>
           </View>
 
-
           <View className="divider" />
 
           <View className="search-input-wrapper">
@@ -144,7 +206,6 @@ function Index() {
               value={filters.keyword}
               onInput={(e) => setKeyword(e.detail.value)}
             />
-
           </View>
 
           <View className="tags-section">
@@ -162,13 +223,13 @@ function Index() {
                   </View>
                 )
               })}
-
             </View>
           </View>
 
           <Button className="search-button" onClick={handleSearch}>查询酒店</Button>
         </View>
 
+        {/* 👇 看这里！你的地址标签完好无损地在这里！👇 */}
         <View className="hot-destinations">
           <View className="section-title">热门目的地</View>
           <View className="destinations-grid">
@@ -181,6 +242,16 @@ function Index() {
           </View>
         </View>
       </View>
+
+      {/* ✅ 去掉了惹祸的 Popup，直接用极其干净的 NutUI 日历 */}
+      <Calendar
+        visible={isCalendarOpen}
+        type="range"
+        startDate={getStartDate()}
+        endDate={getEndDate()}
+        onClose={() => setIsCalendarOpen(false)}
+        onConfirm={handleConfirmDate}
+      />
     </View>
   )
 }
