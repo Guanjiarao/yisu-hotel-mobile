@@ -127,7 +127,7 @@ function HotelLists() {
         requestData.checkOut = checkOut
       }
 
-      console.log('请求参数:', requestData)
+      console.log('【请求参数】:', requestData)
 
       // 发起真实的后端请求
       const response = await Taro.request({
@@ -137,28 +137,49 @@ function HotelLists() {
         timeout: 10000
       })
 
-      console.log('后端返回:', response)
+      // 第一时间打印真实返回数据，方便溯源
+      console.log('【后端真实返回数据】:', response.data)
+      console.log('【返回数据类型】:', typeof response.data)
+      console.log('【statusCode】:', response.statusCode)
 
-      // 处理返回的数据
-      if (response.statusCode === 200 && response.data) {
-        const hotelList = response.data.data || []
-        setHotels(hotelList)
+      // 安全取值与容错赋值
+      if (response.statusCode === 200) {
+        const rawData = response.data
+        
+        // 多层兼容：后端可能返回 { code, data: [...] } 或者直接返回 [...]
+        let list = []
+        
+        if (rawData && typeof rawData === 'object') {
+          // 尝试获取 data 字段
+          list = rawData.data || rawData.list || rawData.hotels || rawData
+        } else {
+          list = rawData
+        }
+        
+        // 强制转为数组，防止 undefined 导致 map 报错
+        const safeList = Array.isArray(list) ? list : []
+        
+        console.log('【解析后的酒店列表】:', safeList)
+        console.log('【酒店数量】:', safeList.length)
+        
+        setHotels(safeList)
         
         // 如果返回空数组，提示用户
-        if (hotelList.length === 0) {
-          console.log('未搜索到酒店')
+        if (safeList.length === 0) {
+          console.log('【提示】未搜索到酒店')
         }
       } else {
-        throw new Error('接口返回异常')
+        console.error('【错误】接口返回状态码异常:', response.statusCode)
+        throw new Error(`接口返回异常: ${response.statusCode}`)
       }
     } catch (error) {
-      console.error('获取酒店数据失败:', error)
+      console.error('【错误】获取酒店数据失败:', error)
       Taro.showToast({ 
         title: '网络开小差了', 
         icon: 'none',
         duration: 2000
       })
-      // 出错时清空列表
+      // 出错时清空列表并确保是数组
       setHotels([])
     } finally {
       setLoading(false)
@@ -243,20 +264,20 @@ function HotelLists() {
       >
         {loading ? (
           <View className="loading-state">加载中...</View>
-        ) : hotels.length === 0 ? (
+        ) : !hotels || hotels.length === 0 ? (
           <View className="empty-state">
             <Text className="empty-icon">🏨</Text>
             <Text className="empty-text">暂无符合条件的酒店~</Text>
             <Text className="empty-hint">试试调整搜索条件吧</Text>
           </View>
         ) : (
-          hotels.map((hotel) => (
+          hotels && Array.isArray(hotels) && hotels.map((hotel) => (
             <View key={hotel.id} className="hotel-card">
               {/* 酒店封面图 */}
               <View className="hotel-image-wrapper">
                 <Image 
                   className="hotel-image" 
-                  src={hotel.image} 
+                  src={hotel.image || hotel.cover_img || hotel.cover_image || 'https://via.placeholder.com/800x400?text=Hotel'} 
                   mode="aspectFill"
                 />
                 {hotel.hasPromotion && (
@@ -268,36 +289,42 @@ function HotelLists() {
               <View className="hotel-info">
                 {/* 第一行：中文名 + 星级 */}
                 <View className="hotel-name-row">
-                  <Text className="hotel-name">{hotel.name}</Text>
+                  <Text className="hotel-name">{hotel.name || '未知酒店'}</Text>
                   <View className="hotel-stars">
-                    {renderStars(hotel.rating)}
+                    {renderStars(hotel.rating || 0)}
                   </View>
                 </View>
 
                 {/* 第二行：英文名 */}
-                <Text className="hotel-name-en">{hotel.nameEn}</Text>
+                {hotel.nameEn && (
+                  <Text className="hotel-name-en">{hotel.nameEn}</Text>
+                )}
 
                 {/* 第三行：评分 + 评论数 */}
                 <View className="hotel-rating-row">
                   <View className="rating-badge">
-                    <Text className="rating-score">{(hotel.rating * 2).toFixed(1)}</Text>
-                    <Text className="rating-count">{hotel.reviewCount}条点评</Text>
+                    <Text className="rating-score">{((hotel.rating || 0) * 2).toFixed(1)}</Text>
+                    <Text className="rating-count">{hotel.reviewCount || 0}条点评</Text>
                   </View>
                 </View>
 
                 {/* 第四行：位置信息 */}
                 <View className="hotel-location-row">
                   <Text className="location-icon">📍</Text>
-                  <Text className="location-text">{hotel.location}</Text>
+                  <Text className="location-text">{hotel.location || hotel.address || '位置信息暂无'}</Text>
                 </View>
-                <Text className="location-distance">{hotel.distance}</Text>
+                {hotel.distance && (
+                  <Text className="location-distance">{hotel.distance}</Text>
+                )}
 
                 {/* 第五行：标签 */}
-                <View className="hotel-tags-row">
-                  {hotel.tags.map((tag, index) => (
-                    <View key={index} className="hotel-tag">{tag}</View>
-                  ))}
-                </View>
+                {hotel.tags && Array.isArray(hotel.tags) && hotel.tags.length > 0 && (
+                  <View className="hotel-tags-row">
+                    {hotel.tags.map((tag, index) => (
+                      <View key={index} className="hotel-tag">{tag}</View>
+                    ))}
+                  </View>
+                )}
 
                 {/* 底部：价格 + 按钮 */}
                 <View className="hotel-footer">
@@ -307,13 +334,13 @@ function HotelLists() {
                     )}
                     <View className="price-current-row">
                       <Text className="price-symbol">¥</Text>
-                      <Text className="price-current">{hotel.currentPrice}</Text>
+                      <Text className="price-current">{hotel.currentPrice || hotel.price || 0}</Text>
                       <Text className="price-unit">起</Text>
                     </View>
                   </View>
                   <View 
                     className="view-detail-btn" 
-                    onClick={() => handleViewDetail(hotel.id)}
+                    onClick={() => handleViewDetail(hotel.id || hotel._id)}
                   >
                     查看详情
                   </View>

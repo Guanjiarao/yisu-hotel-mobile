@@ -115,36 +115,12 @@
 }
 
 /* ========== 加载和空状态 ========== */
-.loading-state {
+.loading-state,
+.empty-state {
   text-align: center;
   padding: 200rpx 0;
   font-size: 28rpx;
   color: #999;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 200rpx 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  .empty-icon {
-    font-size: 120rpx;
-    margin-bottom: 32rpx;
-  }
-
-  .empty-text {
-    font-size: 32rpx;
-    color: #333;
-    font-weight: 500;
-    margin-bottom: 16rpx;
-  }
-
-  .empty-hint {
-    font-size: 24rpx;
-    color: #999;
-  }
 }
 
 /* ========== 酒店卡片 ========== */

@@ -1,16 +1,11 @@
-import { View, Input, Button, Image } from '@tarojs/components'
+import { View, Input, Button, Image, Picker, Text } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
-// ✅ 只引入 NutUI 的 Calendar，不需要 Popup！
 import { Calendar } from '@nutui/nutui-react-taro'
 
-// 👇👇👇 暴力注入防丢装甲 👇👇👇
-// 1. 强行在页面级别加载全局样式
 import '@nutui/nutui-react-taro/dist/style.css'
-// 2. 强行单点加载日历组件的专属样式（双保险！）
 import '@nutui/nutui-react-taro/dist/esm/calendar/style/css'
 import '@nutui/nutui-react-taro/dist/esm/popup/style/css'
-// 👆👆👆 暴力注入防丢装甲 👆👆👆
 
 import './index.scss'
 import { useAuthStore } from '../../store/auth'
@@ -43,8 +38,40 @@ function Index() {
     })
   })
 
-  const handlePickCity = () => {
-    Taro.showToast({ title: '这里可以跳转城市选择页', icon: 'none' })
+  const handleCityChange = (e) => {
+    const selectedRegion = e.detail.value
+    console.log('用户选择的地区:', selectedRegion)
+    
+    if (selectedRegion && selectedRegion.length > 0) {
+      // 提取市级名称（index 1）
+      // 兼容直辖市：如果 index 1 为空或与 index 0 相同，则使用 index 0
+      let cityName = selectedRegion[1] || selectedRegion[0]
+      
+      // 如果是直辖市（省市同名），使用第一个元素
+      if (selectedRegion[0] === selectedRegion[1]) {
+        cityName = selectedRegion[0]
+      }
+      
+      // 确保城市名称包含"市"字（如果原本就有则不重复添加）
+      if (cityName && !cityName.endsWith('市') && !cityName.endsWith('自治区') && !cityName.endsWith('特别行政区')) {
+        // 对于一些特殊情况，保持原样
+        if (!['北京', '上海', '天津', '重庆'].includes(cityName)) {
+          // 非直辖市的情况，如果后端需要带"市"，这里可以添加
+          // cityName = cityName + '市'
+        }
+      }
+      
+      console.log('最终提取的城市名:', cityName)
+      
+      // 调用 Store 的方法更新城市
+      setCity({ city: cityName })
+      
+      Taro.showToast({ 
+        title: `已切换至${cityName}`, 
+        icon: 'success',
+        duration: 1500
+      })
+    }
   }
 
   const handlePickDate = () => {
@@ -134,17 +161,25 @@ function Index() {
 
       <View className="main-content">
         <View className="search-card">
-          <View className="form-item" onClick={handlePickCity}>
-            <View className="form-icon">📍</View>
-            <View className="form-content">
-              <View className="form-label">目的地</View>
-              {locating ? (
-                <View className="debug-text">定位中...</View>
-              ) : (
-                <View className="form-value">{filters.city || '选择城市'}</View>
-              )}
+          <Picker 
+            mode="region" 
+            onChange={handleCityChange}
+          >
+            <View className="form-item">
+              <View className="form-icon">📍</View>
+              <View className="form-content">
+                <View className="form-label">目的地</View>
+                {locating ? (
+                  <View className="debug-text">定位中...</View>
+                ) : (
+                  <View className="form-value">
+                    {filters.city || '选择城市'}
+                    <Text className="picker-arrow">▼</Text>
+                  </View>
+                )}
+              </View>
             </View>
-          </View>
+          </Picker>
 
           <View className="divider" />
 
