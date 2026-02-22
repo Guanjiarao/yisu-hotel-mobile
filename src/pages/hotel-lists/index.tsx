@@ -7,16 +7,25 @@ import './index.scss'
 interface Hotel {
   id: string
   name: string
-  nameEn: string
-  image: string
+  nameEn?: string
+  image?: string
   rating: number
-  reviewCount: number
-  location: string
-  distance: string
-  tags: string[]
+  reviewCount?: number
+  location?: string
+  distance?: string
+  tags?: string[]
   originalPrice?: number
-  currentPrice: number
-  hasPromotion: boolean
+  currentPrice?: number
+  hasPromotion?: boolean
+  // 数据库字段兼容
+  _id?: string
+  cover_img?: string
+  cover_image?: string
+  address?: string
+  price?: number
+  review_count?: number
+  // 索引签名，允许任意其他属性
+  [key: string]: any
 }
 
 function HotelLists() {
@@ -131,7 +140,7 @@ function HotelLists() {
 
       // 发起真实的后端请求
       const response = await Taro.request({
-        url: 'http://localhost:3001/api/hotels/search',
+        url: 'http://116.62.19.40:3002/api/hotels/search',
         method: 'GET',
         data: requestData,
         timeout: 10000
@@ -192,12 +201,7 @@ function HotelLists() {
   }
 
   const handleViewDetail = (hotelId: string) => {
-    Taro.showToast({ 
-      title: `查看酒店 ${hotelId} 详情`, 
-      icon: 'none' 
-    })
-    // TODO: 跳转到酒店详情页
-    // Taro.navigateTo({ url: `/pages/hotel-detail/index?id=${hotelId}` })
+    Taro.navigateTo({ url: `/pages/hotel-detail/index?id=${hotelId}` })
   }
 
   const renderStars = (rating: number) => {
@@ -340,7 +344,7 @@ function HotelLists() {
                   </View>
                   <View 
                     className="view-detail-btn" 
-                    onClick={() => handleViewDetail(hotel.id || hotel._id)}
+                    onClick={() => handleViewDetail(hotel.id || hotel._id || '')}
                   >
                     查看详情
                   </View>

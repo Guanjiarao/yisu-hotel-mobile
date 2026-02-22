@@ -116,6 +116,10 @@ function Index() {
     Taro.navigateTo({ url: '/pages/login/index' })
   }
 
+  const handleGoToOrders = () => {
+    Taro.navigateTo({ url: '/pages/order-list/index' })
+  }
+
   const hotDestinations = [
     { city: '北京', count: '1200+家酒店' },
     { city: '上海', count: '1300+家酒店' },
@@ -142,7 +146,7 @@ function Index() {
           <View className="nav-title">酒店预订</View>
 
           {userInfo ? (
-            <View className="user-profile">
+            <View className="user-profile" onClick={handleGoToOrders}>
               <Image className="user-avatar" src={userInfo.avatar} />
               <View className="user-name">Hi, {userInfo.username}</View>
             </View>
