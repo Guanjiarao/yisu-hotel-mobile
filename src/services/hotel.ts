@@ -37,6 +37,8 @@ export const searchHotelApi = (data: {
   city?: string
   checkInDate?: string
   checkOutDate?: string
+  page?: number
+  pageSize?: number
   minPrice?: number
   maxPrice?: number
 }) => {
