@@ -45,3 +45,10 @@ export const searchHotelApi = (data: {
     loadingText: '搜索中...'
   })
 }
+
+/**
+ * 获取首页 Banner
+ */
+export const getBannersApi = () => {
+  return get(API_ENDPOINTS.HOTEL.BANNERS)
+}
