@@ -37,6 +37,8 @@ export const searchHotelApi = (data: {
   city?: string
   checkInDate?: string
   checkOutDate?: string
+  page?: number
+  pageSize?: number
   minPrice?: number
   maxPrice?: number
 }) => {
@@ -44,4 +46,11 @@ export const searchHotelApi = (data: {
     showLoading: true,
     loadingText: '搜索中...'
   })
+}
+
+/**
+ * 获取首页 Banner
+ */
+export const getBannersApi = () => {
+  return get(API_ENDPOINTS.HOTEL.BANNERS)
 }

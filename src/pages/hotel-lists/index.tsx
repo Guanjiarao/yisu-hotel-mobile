@@ -1,6 +1,7 @@
 import { View, Text, Image, ScrollView } from '@tarojs/components'
 import Taro, { useLoad, getCurrentInstance } from '@tarojs/taro'
 import { useState, useEffect } from 'react'
+import { InfiniteLoading } from '@nutui/nutui-react-taro'
 import { useLocationStore } from '../../store/location'
 import './index.scss'
 
@@ -36,6 +37,11 @@ function HotelLists() {
   const [hotels, setHotels] = useState<Hotel[]>([])
   const [loading, setLoading] = useState(true)
   const [statusBarHeight, setStatusBarHeight] = useState(0)
+
+  // 分页状态
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const pageSize = 10
 
   const address = useLocationStore((s) => s.address)
 
@@ -101,40 +107,32 @@ function HotelLists() {
 
   useEffect(() => {
     if (city && city !== '定位中...') {
-      fetchHotelsData()
+      // 重新搜索时，重置分页状态
+      setPage(1)
+      setHasMore(true)
+      fetchHotelsData(1)
     }
   }, [city, keyword])
 
-  const fetchHotelsData = async () => {
-    setLoading(true)
+  const fetchHotelsData = async (currentPage = 1) => {
     
-    // 显示加载提示
-    Taro.showLoading({ 
-      title: '疯狂搜索中...', 
-      mask: true 
-    })
+    // 只有第一页才显示全屏的加载框
+    if (currentPage === 1) {
+      setLoading(true)
+      Taro.showLoading({ title: '疯狂搜索中...', mask: true })
+    }
     
     try {
-      // 准备请求参数
-      const requestData: any = {}
-      
-      // city 参数：优先使用当前 state 中的 city（已经处理过路由参数和定位）
-      if (city && city !== '定位中...') {
-        requestData.city = city
+      // 准备请求参数，添加分页参数
+      const requestData: any = {
+        page: currentPage,
+        pageSize: pageSize // 统一使用 pageSize
       }
       
-      // keyword 参数
-      if (keyword) {
-        requestData.keyword = keyword
-      }
-      
-      // 日期参数
-      if (checkIn) {
-        requestData.checkIn = checkIn
-      }
-      if (checkOut) {
-        requestData.checkOut = checkOut
-      }
+      if (city && city !== '定位中...') requestData.city = city
+      if (keyword) requestData.keyword = keyword
+      if (checkIn) requestData.checkIn = checkIn
+      if (checkOut) requestData.checkOut = checkOut
 
       console.log('【请求参数】:', requestData)
 
@@ -168,14 +166,17 @@ function HotelLists() {
         // 强制转为数组，防止 undefined 导致 map 报错
         const safeList = Array.isArray(list) ? list : []
         
-        console.log('【解析后的酒店列表】:', safeList)
-        console.log('【酒店数量】:', safeList.length)
+        if (currentPage === 1) {
+          setHotels(safeList)
+        } else {
+          setHotels(prev => [...prev, ...safeList])
+        }
         
-        setHotels(safeList)
-        
-        // 如果返回空数组，提示用户
-        if (safeList.length === 0) {
-          console.log('【提示】未搜索到酒店')
+        // 当返回的列表长度小于分页大小时，认为没有更多数据了
+        if (safeList.length < pageSize) {
+          setHasMore(false)
+        } else {
+          setHasMore(true)
         }
       } else {
         console.error('【错误】接口返回状态码异常:', response.statusCode)
@@ -183,17 +184,21 @@ function HotelLists() {
       }
     } catch (error) {
       console.error('【错误】获取酒店数据失败:', error)
-      Taro.showToast({ 
-        title: '网络开小差了', 
-        icon: 'none',
-        duration: 2000
-      })
-      // 出错时清空列表并确保是数组
-      setHotels([])
+      Taro.showToast({ title: '网络开小差了', icon: 'none', duration: 2000 })
+      if (currentPage === 1) setHotels([])
     } finally {
-      setLoading(false)
-      Taro.hideLoading()
+      if (currentPage === 1) {
+        setLoading(false)
+        Taro.hideLoading()
+      }
     }
+  }
+
+  const loadMore = async () => {
+    if (!hasMore) return
+    const nextPage = page + 1
+    await fetchHotelsData(nextPage)
+    setPage(nextPage)
   }
 
   const handleGoBack = () => {
@@ -262,11 +267,12 @@ function HotelLists() {
       {/* 酒店列表 */}
       <ScrollView 
         className="hotel-list-container"
-        style={{ paddingTop: `${statusBarHeight + 44 + 88}px` }}
+        style={{ paddingTop: `${statusBarHeight + 44 + 88}px`, height: '100vh', boxSizing: 'border-box' }}
         scrollY
         enableBackToTop
+        id="scroll-hotel-list"
       >
-        {loading ? (
+        {loading && page === 1 ? (
           <View className="loading-state">加载中...</View>
         ) : !hotels || hotels.length === 0 ? (
           <View className="empty-state">
@@ -275,9 +281,25 @@ function HotelLists() {
             <Text className="empty-hint">试试调整搜索条件吧</Text>
           </View>
         ) : (
-          hotels && Array.isArray(hotels) && hotels.map((hotel) => (
-            <View key={hotel.id} className="hotel-card">
-              {/* 酒店封面图 */}
+          <InfiniteLoading
+            target="scroll-hotel-list"
+            hasMore={hasMore}
+            onLoadMore={loadMore}
+            loadingText={
+              <View className="infinite-loading-container loading">
+                <Text>正在努力加载中...</Text>
+              </View>
+            }
+            loadMoreText={
+              <View className="infinite-loading-container no-more">
+                <Text>—— 到底啦，没有更多酒店了 ——</Text>
+              </View>
+            }
+            pullRefresh={false}
+          >
+            {hotels && Array.isArray(hotels) && hotels.map((hotel, index) => (
+              <View key={hotel.id || index} className="hotel-card">
+                {/* 酒店封面图 */}
               <View className="hotel-image-wrapper">
                 <Image 
                   className="hotel-image" 
@@ -351,7 +373,8 @@ function HotelLists() {
                 </View>
               </View>
             </View>
-          ))
+          ))}
+          </InfiniteLoading>
         )}
       </ScrollView>
     </View>
