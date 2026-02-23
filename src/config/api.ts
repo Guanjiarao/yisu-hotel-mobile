@@ -22,6 +22,7 @@ export const API_ENDPOINTS = {
     LIST: '/api/hotel/list',            // 酒店列表
     DETAIL: '/api/hotel/detail',        // 酒店详情
     SEARCH: '/api/hotel/search',        // 搜索酒店
+    BANNERS: '/api/hotel/banners',      // 首页 Banner
   },
   
   // 订单相关
