@@ -173,6 +173,9 @@ function OrderList() {
   }
 
   const getStatusType = (status: string): 'pending' | 'completed' | 'cancelled' => {
+    if (status === '待支付') return 'pending'
+    if (status === '已完成') return 'completed'
+    if (status === '已取消') return 'cancelled'
     const statusLower = (status || '').toLowerCase()
     if (statusLower === 'pending' || statusLower.includes('pending')) return 'pending'
     if (statusLower === 'completed' || statusLower.includes('completed')) return 'completed'
@@ -180,39 +183,66 @@ function OrderList() {
     return 'completed'
   }
 
+  const updateOrderStatus = async (orderNo: string, status: string) => {
+    const token = Taro.getStorageSync('token')
+    const response = await Taro.request({
+      url: `http://116.62.19.40:3002/api/orders/${orderNo}/status`,
+      method: 'PUT',
+      data: { status },
+      header: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      timeout: 10000
+    })
+    if (response.statusCode !== 200) {
+      throw new Error(`更新失败: ${response.statusCode}`)
+    }
+    return response.data
+  }
+
   const handleCancelOrder = (orderNo: string) => {
-    console.log('取消订单:', orderNo)
     Taro.showModal({
       title: '取消订单',
-      content: '确定要取消此订单吗？',
-      success: (res) => {
-        if (res.confirm) {
-          // TODO: 调用后端取消订单接口
-          console.log('确认取消订单:', orderNo)
-          Taro.showToast({ title: '订单已取消', icon: 'success' })
-          // 重新获取订单列表
-          fetchOrders()
+      content: '确定要取消此订单吗？取消后无法恢复。',
+      confirmText: '确认取消',
+      confirmColor: '#ff4d4f',
+      success: async (res) => {
+        if (!res.confirm) return
+        try {
+          Taro.showLoading({ title: '取消中...', mask: true })
+          await updateOrderStatus(orderNo, '已取消')
+          Taro.hideLoading()
+          Taro.showToast({ title: '订单已取消', icon: 'success', duration: 1500 })
+          setTimeout(() => fetchOrders(), 1500)
+        } catch (err) {
+          Taro.hideLoading()
+          Taro.showToast({ title: '取消失败，请重试', icon: 'none' })
         }
       }
     })
   }
 
-  const handlePayOrder = (orderNo: string) => {
-    console.log('支付订单:', orderNo)
-    Taro.showToast({ title: '跳转支付...', icon: 'none' })
-    // TODO: 跳转到支付页面
+  const handlePayOrder = async (orderNo: string) => {
+    Taro.showLoading({ title: '支付中...', mask: true })
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    try {
+      await updateOrderStatus(orderNo, '已完成')
+      Taro.hideLoading()
+      Taro.showToast({ title: '支付成功', icon: 'success', duration: 1500 })
+      setTimeout(() => fetchOrders(), 1500)
+    } catch (err) {
+      Taro.hideLoading()
+      Taro.showToast({ title: '支付失败，请重试', icon: 'none' })
+    }
   }
 
-  const handleBookAgain = (order: Order) => {
-    console.log('再次预订:', order.order_no, order.hotel_name)
+  const handleBookAgain = (_order: Order) => {
     Taro.showToast({ title: '再次预订...', icon: 'none' })
-    // TODO: 跳转到酒店详情页或创建订单页
   }
 
   const handleViewDetail = (orderNo: string) => {
-    console.log('查看订单详情:', orderNo)
-    Taro.showToast({ title: '查看订单详情', icon: 'none' })
-    // TODO: 跳转到订单详情页
+    Taro.navigateTo({ url: `/pages/order-detail/index?order_no=${orderNo}` })
   }
 
   const getStatusClass = (status: string): string => {
@@ -260,7 +290,11 @@ function OrderList() {
             const nights = calculateNights(order.check_in, order.check_out)
             
             return (
-              <View key={order.order_no || order.id || index} className="order-card">
+              <View
+                key={order.order_no || order.id || index}
+                className="order-card"
+                onClick={() => handleViewDetail(order.order_no)}
+              >
                 {/* 顶部：酒店名称 + 状态 */}
                 <View className="order-header">
                   <Text className="hotel-name">{order.hotel_name || '未知酒店'}</Text>
@@ -270,7 +304,7 @@ function OrderList() {
                 </View>
 
                 {/* 中部：订单详情 */}
-                <View className="order-content" onClick={() => handleViewDetail(order.order_no)}>
+                <View className="order-content">
                   <Text className="room-name">{order.room_name || '标准房'}</Text>
                   
                   <View className="date-info">
@@ -289,40 +323,32 @@ function OrderList() {
                   </View>
                 </View>
 
-                {/* 底部：操作按钮 */}
-                <View className="order-footer">
+                {/* 底部：操作按钮（阻止冒泡，避免触发卡片跳转） */}
+                <View className="order-footer" onClick={e => e.stopPropagation()}>
                   <Text className="order-id">订单号：{order.order_no}</Text>
                   <View className="action-buttons">
-                    {statusType === 'pending' && (
+                    {order.status === '待支付' && (
                       <>
-                        <View 
+                        <View
                           className="action-btn btn-cancel"
-                          onClick={() => handleCancelOrder(order.order_no)}
+                          onClick={e => { e.stopPropagation(); handleCancelOrder(order.order_no) }}
                         >
                           取消订单
                         </View>
-                        <View 
+                        <View
                           className="action-btn btn-pay"
-                          onClick={() => handlePayOrder(order.order_no)}
+                          onClick={e => { e.stopPropagation(); handlePayOrder(order.order_no) }}
                         >
-                          去支付
+                          立即支付
                         </View>
                       </>
                     )}
-                    {statusType === 'completed' && (
-                      <View 
+                    {(order.status === '已完成' || order.status === '已取消') && (
+                      <View
                         className="action-btn btn-book-again"
-                        onClick={() => handleBookAgain(order)}
+                        onClick={e => { e.stopPropagation(); handleBookAgain(order) }}
                       >
                         再次预订
-                      </View>
-                    )}
-                    {statusType === 'cancelled' && (
-                      <View 
-                        className="action-btn btn-book-again"
-                        onClick={() => handleBookAgain(order)}
-                      >
-                        重新预订
                       </View>
                     )}
                   </View>

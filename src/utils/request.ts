@@ -4,7 +4,7 @@
  */
 
 import Taro from '@tarojs/taro'
-import { BASE_URL, REQUEST_TIMEOUT } from '../config/api'
+import { AUTH_BASE_URL, BUSINESS_BASE_URL, REQUEST_TIMEOUT } from '../config/api'
 
 // 请求拦截器 - 添加 token 等
 const requestInterceptor = (config: any) => {
@@ -28,7 +28,7 @@ const responseInterceptor = (response: any) => {
   // HTTP 状态码检查
   if (statusCode >= 200 && statusCode < 300) {
     // 业务状态码检查
-    if (data.code === 0 || data.success) {
+    if (data.code === 0 || data.code === 200 || data.success) {
       return data
     } else {
       // 业务错误
@@ -92,7 +92,7 @@ export const request = async (options: RequestOptions) => {
   try {
     // 构建完整的请求配置
     let config: any = {
-      url: url.startsWith('http') ? url : `${BASE_URL}${url}`,
+      url: url.startsWith('http') ? url : `${url.includes('/api/user') ? AUTH_BASE_URL : BUSINESS_BASE_URL}${url}`,
       method,
       timeout: REQUEST_TIMEOUT,
       header: {

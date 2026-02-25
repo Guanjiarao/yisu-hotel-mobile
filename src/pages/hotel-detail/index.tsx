@@ -38,8 +38,7 @@ interface HotelData {
   }
 }
 
-// 默认占位图
-const DEFAULT_IMAGE = 'https://via.placeholder.com/800x400?text=Hotel+Image'
+const DEFAULT_IMAGE = ''
 
 function HotelDetail() {
   const [hotelData, setHotelData] = useState<HotelData | null>(null)
@@ -501,7 +500,7 @@ function HotelDetail() {
           {hotelData?.rooms && Array.isArray(hotelData.rooms) && hotelData.rooms.length > 0 ? (
             <>
               <Text className="section-subtitle">按价格从低到高排列</Text>
-              {(hotelData?.rooms || []).map((room) => (
+              {(hotelData?.rooms || []).map((room, index) => (
                 <View key={room?.id || index} className="room-card">
                   <View className="room-image-wrapper">
                     <Image 

@@ -197,14 +197,13 @@ function Index() {
                     onClick={() => handleBannerClick(banner.hotel_id)}
                   >
                     <Image
-                      src={banner.cover_image}
+                      src={banner.image_url}
                       className="banner-image"
                       mode="aspectFill"
                     />
                     <View className="banner-overlay" />
                     <View className="banner-content">
-                      <View className="banner-title">{banner.name}</View>
-                      <View className="banner-subtitle">{banner.description}</View>
+                      <View className="banner-title">{banner.title}</View>
                     </View>
                   </View>
                 </Swiper.Item>

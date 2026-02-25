@@ -71,40 +71,188 @@
   left: 0;
   right: 0;
   background-color: #ffffff;
-  padding: 20rpx 24rpx 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  padding: 0 24rpx 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
   z-index: 999;
 
   .filter-options {
     display: flex;
     align-items: center;
-    justify-content: space-around;
-    margin-bottom: 16rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+    margin-bottom: 12rpx;
 
     .filter-item {
       flex: 1;
       text-align: center;
       font-size: 26rpx;
       color: #333;
-      padding: 16rpx 0;
+      padding: 20rpx 0;
       position: relative;
 
       &:active {
-        opacity: 0.6;
+        opacity: 0.7;
+      }
+
+      &.filter-item-active {
+        color: #1677ff;
+        font-weight: 600;
       }
 
       &.filter-icon {
-        color: #0086F6;
+        color: #555;
         font-weight: 500;
+
+        &.filter-item-active {
+          color: #1677ff;
+        }
       }
     }
   }
 
   .filter-result {
     font-size: 22rpx;
-    color: #999;
+    color: #aaa;
     text-align: center;
   }
+
+  /* 下拉菜单通用 */
+  .dropdown-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: #ffffff;
+    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
+    z-index: 1001;
+    border-radius: 0 0 16rpx 16rpx;
+    overflow: hidden;
+
+    &.dropdown-menu-star {
+      left: 33.33%;
+      right: 33.33%;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28rpx 32rpx;
+      font-size: 28rpx;
+      color: #333;
+      border-bottom: 1rpx solid #f5f5f5;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:active {
+        background-color: #f8f8f8;
+      }
+
+      &.dropdown-item-active {
+        color: #1677ff;
+        font-weight: 600;
+        background-color: #f0f7ff;
+      }
+
+      .dropdown-check {
+        font-size: 28rpx;
+        color: #1677ff;
+      }
+    }
+  }
+
+  /* 价格筛选面板 */
+  .filter-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: #ffffff;
+    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
+    z-index: 1001;
+    border-radius: 0 0 16rpx 16rpx;
+    padding: 32rpx;
+
+    .filter-panel-title {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 24rpx;
+    }
+
+    .price-range-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 32rpx;
+
+      .price-input {
+        flex: 1;
+        height: 72rpx;
+        border: 1rpx solid #e0e0e0;
+        border-radius: 8rpx;
+        padding: 0 20rpx;
+        font-size: 28rpx;
+        color: #333;
+        background: #fafafa;
+        box-sizing: border-box;
+      }
+
+      .price-range-sep {
+        margin: 0 16rpx;
+        color: #aaa;
+        font-size: 28rpx;
+        flex-shrink: 0;
+      }
+    }
+
+    .filter-panel-actions {
+      display: flex;
+      gap: 20rpx;
+
+      .filter-btn-reset {
+        flex: 1;
+        height: 72rpx;
+        line-height: 72rpx;
+        text-align: center;
+        border: 1rpx solid #d9d9d9;
+        border-radius: 40rpx;
+        font-size: 28rpx;
+        color: #666;
+
+        &:active {
+          background: #f5f5f5;
+        }
+      }
+
+      .filter-btn-confirm {
+        flex: 2;
+        height: 72rpx;
+        line-height: 72rpx;
+        text-align: center;
+        background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
+        border-radius: 40rpx;
+        font-size: 28rpx;
+        color: #ffffff;
+        font-weight: 600;
+
+        &:active {
+          opacity: 0.85;
+        }
+      }
+    }
+  }
+}
+
+/* 下拉遮罩 */
+.dropdown-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 998;
+  background: transparent;
 }
 
 /* ========== 酒店列表容器 ========== */
@@ -126,21 +274,20 @@
 /* ========== 酒店卡片 ========== */
 .hotel-card {
   background-color: #ffffff;
-  border-radius: 24px;
-  margin-bottom: 32px;
+  border-radius: 16px;
+  margin-bottom: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 
   &:active {
-    transform: scale(0.98);
+    opacity: 0.92;
   }
 
   /* 酒店封面图 */
   .hotel-image-wrapper {
     position: relative;
     width: 100%;
-    height: 400px;
+    height: 180px;
     overflow: hidden;
 
     .hotel-image {
@@ -151,45 +298,48 @@
 
     .promotion-tag {
       position: absolute;
-      top: 24px;
-      left: 24px;
+      top: 12px;
+      left: 12px;
       background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
       color: #ffffff;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 600;
-      padding: 8px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(255, 77, 79, 0.4);
+      padding: 4px 12px;
+      border-radius: 6px;
     }
   }
 
   /* 酒店信息区域 */
   .hotel-info {
-    padding: 32px;
+    padding: 16px;
 
     /* 第一行：名称 + 星级 */
     .hotel-name-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 6px;
 
       .hotel-name {
-        font-size: 32px;
+        font-size: 28px;
         font-weight: 600;
-        color: #333;
+        color: #222;
         flex: 1;
-        margin-right: 16px;
+        margin-right: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .hotel-stars {
         display: flex;
         align-items: center;
+        flex-shrink: 0;
 
         .star {
-          font-size: 24px;  // 缩小星星图标
+          font-size: 20px;
           color: #d9d9d9;
-          margin-left: 4px;
+          margin-left: 2px;
 
           &.star-active {
             color: #fadb14;
@@ -198,79 +348,85 @@
       }
     }
 
-    /* 第二行：英文名 */
+    /* 英文名 */
     .hotel-name-en {
-      font-size: 24px;
-      color: #999;
-      margin-bottom: 16px;
+      font-size: 22px;
+      color: #aaa;
+      margin-bottom: 10px;
       display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    /* 第三行：评分 */
+    /* 评分 */
     .hotel-rating-row {
-      margin-bottom: 16px;
+      margin-bottom: 10px;
 
       .rating-badge {
         display: inline-flex;
         align-items: center;
         background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
-        padding: 8px 20px;
-        border-radius: 8px;
+        padding: 4px 12px;
+        border-radius: 6px;
 
         .rating-score {
-          font-size: 28px;
+          font-size: 24px;
           font-weight: 600;
           color: #ffffff;
-          margin-right: 12px;
+          margin-right: 6px;
         }
 
         .rating-count {
-          font-size: 22px;
-          color: #ffffff;
-          opacity: 0.9;
+          font-size: 20px;
+          color: rgba(255, 255, 255, 0.9);
         }
       }
     }
 
-    /* 第四行：位置 */
+    /* 位置 */
     .hotel-location-row {
       display: flex;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
 
       .location-icon {
-        font-size: 24px;
-        margin-right: 8px;
+        font-size: 22px;
+        margin-right: 6px;
+        flex-shrink: 0;
       }
 
       .location-text {
-        font-size: 26px;
+        font-size: 22px;
         color: #666;
         flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
 
     .location-distance {
-      font-size: 24px;
-      color: #999;
-      margin-left: 32px;
-      margin-bottom: 20px;
+      font-size: 20px;
+      color: #aaa;
+      margin-left: 28px;
+      margin-bottom: 10px;
       display: block;
     }
 
-    /* 第五行：标签 */
+    /* 标签 */
     .hotel-tags-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 32px;
+      gap: 8px;
+      margin-bottom: 14px;
 
       .hotel-tag {
         background-color: #e6f4ff;
         color: #1677ff;
-        font-size: 22px;
-        padding: 8px 20px;
-        border-radius: 6px;
+        font-size: 20px;
+        padding: 4px 12px;
+        border-radius: 4px;
         font-weight: 500;
       }
     }
@@ -278,9 +434,9 @@
     /* 底部：价格 + 按钮 */
     .hotel-footer {
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       justify-content: space-between;
-      padding-top: 24px;
+      padding-top: 12px;
       border-top: 1px solid #f0f0f0;
 
       .price-section {
@@ -289,10 +445,10 @@
         align-items: flex-start;
 
         .price-original {
-          font-size: 24px;
-          color: #999;
+          font-size: 20px;
+          color: #bbb;
           text-decoration: line-through;
-          margin-bottom: 8px;
+          margin-bottom: 2px;
         }
 
         .price-current-row {
@@ -300,21 +456,21 @@
           align-items: baseline;
 
           .price-symbol {
-            font-size: 28px;
+            font-size: 20px;
             color: #1677ff;
             font-weight: 600;
-            margin-right: 4px;
+            margin-right: 2px;
           }
 
           .price-current {
-            font-size: 48px;
+            font-size: 30px;
             color: #1677ff;
             font-weight: 700;
             line-height: 1;
           }
 
           .price-unit {
-            font-size: 24px;
+            font-size: 20px;
             color: #1677ff;
             margin-left: 4px;
           }
@@ -324,17 +480,14 @@
       .view-detail-btn {
         background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
         color: #ffffff;
-        font-size: 28px;
+        font-size: 20px;
         font-weight: 600;
-        padding: 20px 48px;
-        border-radius: 48px;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
-        transition: all 0.2s ease;
+        padding: 12px 32px;
+        border-radius: 40px;
+        box-shadow: 0 2px 8px rgba(22, 119, 255, 0.3);
 
         &:active {
-          transform: scale(0.95);
-          box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4);
+          opacity: 0.85;
         }
       }
     }

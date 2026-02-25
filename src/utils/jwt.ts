@@ -1,95 +1,36 @@
 /**
  * JWT Token 解析工具
- * 兼容微信小程序环境（不依赖 atob）
+ * 使用 Taro.base64ToArrayBuffer + Uint8Array，完美兼容微信小程序 JSCore
  */
 
-/**
- * Base64Url 解码函数（手写实现，兼容小程序）
- */
-function base64UrlDecode(str: string): string {
-  // Base64Url 转 Base64
-  let base64 = str.replace(/-/g, '+').replace(/_/g, '/')
-  
-  // 补齐 padding
-  const padding = base64.length % 4
-  if (padding) {
-    base64 += '='.repeat(4 - padding)
-  }
-
-  // 使用通用的 Base64 解码
-  try {
-    // 尝试使用原生 atob（浏览器环境）
-    if (typeof atob !== 'undefined') {
-      return decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      )
-    }
-  } catch (e) {
-    console.log('atob 不可用，使用手动解码')
-  }
-
-  // 手动 Base64 解码（兼容小程序）
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-  let result = ''
-  let i = 0
-
-  base64 = base64.replace(/[^A-Za-z0-9+/=]/g, '')
-
-  while (i < base64.length) {
-    const enc1 = chars.indexOf(base64.charAt(i++))
-    const enc2 = chars.indexOf(base64.charAt(i++))
-    const enc3 = chars.indexOf(base64.charAt(i++))
-    const enc4 = chars.indexOf(base64.charAt(i++))
-
-    const chr1 = (enc1 << 2) | (enc2 >> 4)
-    const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2)
-    const chr3 = ((enc3 & 3) << 6) | enc4
-
-    result += String.fromCharCode(chr1)
-
-    if (enc3 !== 64) {
-      result += String.fromCharCode(chr2)
-    }
-    if (enc4 !== 64) {
-      result += String.fromCharCode(chr3)
-    }
-  }
-
-  // UTF-8 解码
-  return decodeURIComponent(
-    result
-      .split('')
-      .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-      .join('')
-  )
-}
+import Taro from '@tarojs/taro'
 
 /**
  * 解析 JWT Token 的 Payload
  */
 export function parseJWT(token: string): any {
   try {
-    if (!token || typeof token !== 'string') {
-      throw new Error('Token 格式错误')
+    if (!token || typeof token !== 'string') return null
+
+    const base64Url = token.split('.')[1]
+    if (!base64Url) return null
+
+    // Base64Url → Base64，并补齐 padding
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const pad = base64.length % 4
+    if (pad) base64 += new Array(5 - pad).join('=')
+
+    // 使用 Taro 原生 API 解码，避免 atob 在 JSCore 上的兼容问题
+    const buffer = Taro.base64ToArrayBuffer(base64)
+    const bytes = new Uint8Array(buffer)
+
+    // 逐字节转为百分号编码，再用 decodeURIComponent 还原 UTF-8（中文安全）
+    let encodedString = ''
+    for (let i = 0; i < bytes.length; i++) {
+      encodedString += '%' + ('00' + bytes[i].toString(16)).slice(-2)
     }
 
-    // JWT 格式：header.payload.signature
-    const parts = token.split('.')
-    
-    if (parts.length !== 3) {
-      throw new Error('Token 格式不正确')
-    }
-
-    // 解码 payload（第二部分）
-    const payload = parts[1]
-    const decodedPayload = base64UrlDecode(payload)
-    
-    // 解析为 JSON 对象
-    const payloadObj = JSON.parse(decodedPayload)
-    
+    const payloadObj = JSON.parse(decodeURIComponent(encodedString))
     console.log('【JWT 解析成功】Payload:', payloadObj)
     return payloadObj
   } catch (error) {
