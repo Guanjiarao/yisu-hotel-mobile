@@ -111,22 +111,42 @@ function OrderDetail() {
     }
   }
 
+  // 从日期字符串中安全提取 YYYY-MM-DD，不经过 new Date 转换，避免时区偏移
+  const extractYMD = (dateStr: string): { y: number; m: number; d: number } | null => {
+    if (!dateStr) return null
+    // 兼容 "2026-02-25" 和 "2026-02-25T10:00:00.000Z" 两种格式
+    const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (!match) return null
+    return { y: parseInt(match[1]), m: parseInt(match[2]), d: parseInt(match[3]) }
+  }
+
   const formatDate = (dateStr: string): string => {
-    if (!dateStr) return '-'
-    const d = new Date(dateStr)
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const ymd = extractYMD(dateStr)
+    if (!ymd) return '-'
+    return `${ymd.m}月${ymd.d}日`
   }
 
   const formatDateTime = (dateStr: string): string => {
     if (!dateStr) return '-'
-    const d = new Date(dateStr)
-    return `${formatDate(dateStr)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    const ymd = extractYMD(dateStr)
+    // 时间部分用本地时间解析（带时区的 datetime 用 replace 修正 iOS 兼容性）
+    const safeStr = String(dateStr).replace('T', ' ').replace('Z', '').replace(/-/g, '/')
+    const d = new Date(safeStr)
+    const timeStr = isNaN(d.getTime())
+      ? ''
+      : ` ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    if (!ymd) return '-'
+    return `${ymd.y}-${String(ymd.m).padStart(2, '0')}-${String(ymd.d).padStart(2, '0')}${timeStr}`
   }
 
   const calculateNights = (checkIn: string, checkOut: string): number => {
-    if (!checkIn || !checkOut) return 1
-    const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime()
-    const n = Math.ceil(diff / (1000 * 60 * 60 * 24))
+    const inYmd = extractYMD(checkIn)
+    const outYmd = extractYMD(checkOut)
+    if (!inYmd || !outYmd) return 1
+    // 用纯日期（不含时间）计算晚数，避免时区偏移导致相差 0 晚
+    const inMs = new Date(inYmd.y, inYmd.m - 1, inYmd.d).getTime()
+    const outMs = new Date(outYmd.y, outYmd.m - 1, outYmd.d).getTime()
+    const n = Math.round((outMs - inMs) / (1000 * 60 * 60 * 24))
     return n > 0 ? n : 1
   }
 

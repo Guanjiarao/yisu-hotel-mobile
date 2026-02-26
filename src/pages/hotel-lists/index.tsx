@@ -575,7 +575,6 @@ function HotelLists() {
                     ))}
                   </View>
                 )}
-              </View>
 
                 {/* 底部：价格 + 按钮 */}
                 <View className="hotel-footer">
@@ -589,14 +588,15 @@ function HotelLists() {
                       <Text className="price-unit">起</Text>
                     </View>
                   </View>
-                  <View 
-                    className="view-detail-btn" 
+                  <View
+                    className="view-detail-btn"
                     onClick={() => handleViewDetail(hotel.id || hotel._id || '')}
                   >
                     查看详情
                   </View>
                 </View>
               </View>
+            </View>
           ))}
           </InfiniteLoading>
         )}

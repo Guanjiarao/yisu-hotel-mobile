@@ -80,9 +80,21 @@ function OrderCreate() {
     const instance = getCurrentInstance()
     const params = instance.router?.params || {}
 
-    const checkInDate = params.checkIn || ''
-    const checkOutDate = params.checkOut || ''
-    
+    console.log('🔥 接收到的原始路由参数:', params)
+
+    // checkIn/checkOut 可能经过 URLSearchParams 编码，需要 decode
+    let checkInDate = ''
+    let checkOutDate = ''
+    try { checkInDate = decodeURIComponent(params.checkIn || '') } catch { checkInDate = params.checkIn || '' }
+    try { checkOutDate = decodeURIComponent(params.checkOut || '') } catch { checkOutDate = params.checkOut || '' }
+
+    // 统一转为 YYYY-MM-DD 格式（兼容斜杠 2026/03/01 和横杠 2026-03-01）
+    const normalizeDate = (s: string) => s.replace(/\//g, '-').trim()
+    checkInDate = normalizeDate(checkInDate)
+    checkOutDate = normalizeDate(checkOutDate)
+
+    console.log('🔥 解码后日期:', { checkInDate, checkOutDate })
+
     // 计算入住天数
     const nights = calculateNights(checkInDate, checkOutDate)
 
@@ -104,22 +116,30 @@ function OrderCreate() {
     }
   })
 
+  // 安全提取 YYYY-MM-DD 中的年月日，避免 iOS 时区偏移
+  const extractYMD = (dateStr: string) => {
+    const match = String(dateStr || '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (!match) return null
+    return { y: parseInt(match[1]), m: parseInt(match[2]), d: parseInt(match[3]) }
+  }
+
   const calculateNights = (checkIn: string, checkOut: string): number => {
-    if (!checkIn || !checkOut) return 1
-    const start = new Date(checkIn).getTime()
-    const end = new Date(checkOut).getTime()
-    const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24))
-    return nights > 0 ? nights : 1
+    const inYmd = extractYMD(checkIn)
+    const outYmd = extractYMD(checkOut)
+    if (!inYmd || !outYmd) return 1
+    const inMs = new Date(inYmd.y, inYmd.m - 1, inYmd.d).getTime()
+    const outMs = new Date(outYmd.y, outYmd.m - 1, outYmd.d).getTime()
+    const n = Math.round((outMs - inMs) / (1000 * 60 * 60 * 24))
+    return n > 0 ? n : 1
   }
 
   const formatDate = (dateStr: string): string => {
-    if (!dateStr) return ''
-    const date = new Date(dateStr)
-    const month = date.getMonth() + 1
-    const day = date.getDate()
+    const ymd = extractYMD(dateStr)
+    if (!ymd) return ''
+    // 用本地时间构造，避免时区偏移导致星期几算错
+    const date = new Date(ymd.y, ymd.m - 1, ymd.d)
     const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-    const weekday = weekdays[date.getDay()]
-    return `${month}月${day}日 ${weekday}`
+    return `${ymd.m}月${ymd.d}日 ${weekdays[date.getDay()]}`
   }
 
   const getTotalPrice = (): number => {

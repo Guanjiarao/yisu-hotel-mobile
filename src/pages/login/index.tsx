@@ -19,14 +19,6 @@ function Login() {
       Taro.navigateBack()
     } else {
       Taro.reLaunch({ url: '/pages/index/index' })
-    Taro.reLaunch({ url: '/pages/index/index' })
-    return
-    // eslint-disable-next-line no-unreachable
-    Taro.navigateBack({
-      fail: () => {
-        Taro.redirectTo({ url: '/pages/index/index' })
-      },
-    })
     }
   }
 

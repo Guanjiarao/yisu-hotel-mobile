@@ -140,28 +140,39 @@ function OrderList() {
     { key: 'cancelled' as TabType, label: '已取消' }
   ]
 
+  const TAB_STATUS_MAP: Record<TabType, string[]> = {
+    all: [],
+    pending: ['待支付', 'pending'],
+    completed: ['已完成', 'completed'],
+    cancelled: ['已取消', 'cancelled'],
+  }
+
   const getFilteredOrders = (): Order[] => {
     if (activeTab === 'all') return orders
-    return orders.filter(order => {
-      const status = (order.status || '').toLowerCase()
-      return status === activeTab || status.includes(activeTab)
-    })
+    const matched = TAB_STATUS_MAP[activeTab]
+    return orders.filter(order => matched.includes(order.status))
+  }
+
+  const extractYMD = (dateStr: string) => {
+    const match = String(dateStr || '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (!match) return null
+    return { y: parseInt(match[1]), m: parseInt(match[2]), d: parseInt(match[3]) }
   }
 
   const formatDate = (dateStr: string): string => {
-    if (!dateStr) return ''
-    const date = new Date(dateStr)
-    const month = date.getMonth() + 1
-    const day = date.getDate()
-    return `${month}月${day}日`
+    const ymd = extractYMD(dateStr)
+    if (!ymd) return ''
+    return `${ymd.m}月${ymd.d}日`
   }
 
   const calculateNights = (checkIn: string, checkOut: string): number => {
-    if (!checkIn || !checkOut) return 1
-    const start = new Date(checkIn).getTime()
-    const end = new Date(checkOut).getTime()
-    const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24))
-    return nights > 0 ? nights : 1
+    const inYmd = extractYMD(checkIn)
+    const outYmd = extractYMD(checkOut)
+    if (!inYmd || !outYmd) return 1
+    const inMs = new Date(inYmd.y, inYmd.m - 1, inYmd.d).getTime()
+    const outMs = new Date(outYmd.y, outYmd.m - 1, outYmd.d).getTime()
+    const n = Math.round((outMs - inMs) / (1000 * 60 * 60 * 24))
+    return n > 0 ? n : 1
   }
 
   const getStatusText = (status: string): string => {

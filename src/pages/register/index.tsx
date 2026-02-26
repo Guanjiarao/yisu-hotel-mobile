@@ -61,7 +61,12 @@ function Register() {
       
       // 延迟跳转到登录页
       setTimeout(() => {
-        Taro.navigateBack()
+        const pages = Taro.getCurrentPages()
+        if (pages.length > 1) {
+          Taro.navigateBack()
+        } else {
+          Taro.reLaunch({ url: '/pages/index/index' })
+        }
       }, 1500)
     } catch (error) {
       console.error('注册失败:', error)
