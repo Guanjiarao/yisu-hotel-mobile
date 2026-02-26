@@ -3,8 +3,11 @@
  * 统一管理后端接口地址
  */
 
-// 后端服务器基础地址
-export const BASE_URL = 'http://116.62.19.40:3001'
+// 用户鉴权服务（登录、注册等 /api/user/... 路径）
+export const AUTH_BASE_URL = 'http://116.62.19.40:3001'
+
+// 核心业务服务（酒店、订单、Banner 等）
+export const BUSINESS_BASE_URL = 'http://116.62.19.40:3002'
 
 // API 端点配置
 export const API_ENDPOINTS = {
@@ -22,6 +25,7 @@ export const API_ENDPOINTS = {
     LIST: '/api/hotel/list',            // 酒店列表
     DETAIL: '/api/hotel/detail',        // 酒店详情
     SEARCH: '/api/hotel/search',        // 搜索酒店
+    BANNERS: '/api/hotel/banners',      // 首页 Banner
   },
   
   // 订单相关

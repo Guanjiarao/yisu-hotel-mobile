@@ -1,8 +1,6 @@
 import { defineConfig, type UserConfigExport } from '@tarojs/cli'
-import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import devConfig from './dev'
 import prodConfig from './prod'
-import vitePluginImp from 'vite-plugin-imp'
 // https://taro-docs.jd.com/docs/next/config#defineconfig-辅助函数
 export default defineConfig<'vite'>(async (merge, { command, mode }) => {
   const baseConfig: UserConfigExport<'vite'> = {
@@ -28,18 +26,7 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
     },
     framework: 'react',
     compiler: {
-      vitePlugins: [vitePluginImp({
-        libList: [
-          {
-            libName: '@nutui/nutui-react-taro',
-            style: (name) => {
-              return `@nutui/nutui-react-taro/dist/esm/${name}/style/css`
-            },
-            replaceOldImport: false,
-            camel2DashComponentName: false,
-          }
-        ]
-      })],
+      vitePlugins: [],
       type: 'vite'
     },
     mini: {

@@ -14,11 +14,12 @@ function Login() {
 
   // 返回首页
   const handleBack = () => {
-    Taro.navigateBack({
-      fail: () => {
-        Taro.redirectTo({ url: '/pages/index/index' })
-      },
-    })
+    const pages = Taro.getCurrentPages()
+    if (pages.length > 1) {
+      Taro.navigateBack()
+    } else {
+      Taro.reLaunch({ url: '/pages/index/index' })
+    }
   }
 
   const handleLogin = async () => {

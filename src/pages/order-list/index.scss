@@ -1,0 +1,237 @@
+.order-list-page {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+/* ========== 顶部 Tabs 吸顶 ========== */
+.tabs-container {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  background: #ffffff;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+
+  .tab-item {
+    flex: 1;
+    text-align: center;
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #666;
+    padding: 32rpx 0;
+    position: relative;
+    transition: all 0.3s ease;
+
+    &.tab-active {
+      color: #0086F6;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60rpx;
+        height: 6rpx;
+        background: #0086F6;
+        border-radius: 3rpx;
+      }
+    }
+  }
+}
+
+/* ========== 订单列表滚动区 ========== */
+.order-list-scroll {
+  height: calc(100vh - 96rpx);
+  padding: 24rpx 32rpx;
+}
+
+/* ========== 加载和空状态 ========== */
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+
+.loading-state {
+  .loading-text {
+    font-size: 28rpx;
+    color: #999;
+  }
+}
+
+.empty-state {
+  .empty-icon {
+    font-size: 120rpx;
+    margin-bottom: 32rpx;
+  }
+
+  .empty-text {
+    font-size: 28rpx;
+    color: #999;
+  }
+}
+
+/* ========== 订单卡片 ========== */
+.order-card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+/* 顶部：酒店名称 + 状态 */
+.order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+
+  .hotel-name {
+    flex: 1;
+    font-size: 32rpx;
+    font-weight: 700;
+    color: #333;
+    margin-right: 16rpx;
+  }
+
+  .order-status {
+    font-size: 24rpx;
+    font-weight: 600;
+    padding: 8rpx 20rpx;
+    border-radius: 8rpx;
+    white-space: nowrap;
+
+    &.status-pending {
+      color: #ff4d4f;
+      background: #fff1f0;
+    }
+
+    &.status-completed {
+      color: #52c41a;
+      background: #f6ffed;
+    }
+
+    &.status-cancelled {
+      color: #999;
+      background: #f5f5f5;
+    }
+  }
+}
+
+/* 中部：订单详情 */
+.order-content {
+  padding: 24rpx 32rpx;
+
+  .room-name {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16rpx;
+    display: block;
+  }
+
+  .date-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20rpx;
+
+    .date-text {
+      font-size: 26rpx;
+      color: #666;
+      margin-right: 16rpx;
+    }
+
+    .nights-text {
+      font-size: 24rpx;
+      color: #0086F6;
+      background: #e6f4ff;
+      padding: 4rpx 16rpx;
+      border-radius: 6rpx;
+    }
+  }
+
+  .price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 20rpx;
+    border-top: 1rpx solid #f0f0f0;
+
+    .price-label {
+      font-size: 26rpx;
+      color: #666;
+    }
+
+    .price-value-row {
+      display: flex;
+      align-items: baseline;
+
+      .price-symbol {
+        font-size: 24rpx;
+        color: #ff4d4f;
+        font-weight: 600;
+        margin-right: 4rpx;
+      }
+
+      .price-value {
+        font-size: 36rpx;
+        color: #ff4d4f;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+/* 底部：操作按钮 */
+.order-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 32rpx;
+  background: #fafafa;
+
+  .order-id {
+    font-size: 22rpx;
+    color: #999;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 16rpx;
+
+    .action-btn {
+      font-size: 26rpx;
+      padding: 12rpx 32rpx;
+      border-radius: 32rpx;
+      transition: all 0.2s ease;
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      &.btn-cancel {
+        color: #666;
+        background: #ffffff;
+        border: 1rpx solid #d9d9d9;
+      }
+
+      &.btn-pay {
+        color: #ffffff;
+        background: linear-gradient(135deg, #0086F6 0%, #40a9ff 100%);
+        box-shadow: 0 2rpx 8rpx rgba(0, 134, 246, 0.3);
+      }
+
+      &.btn-book-again {
+        color: #0086F6;
+        background: #e6f4ff;
+        border: 1rpx solid #91d5ff;
+      }
+    }
+  }
+}

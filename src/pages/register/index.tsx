@@ -15,11 +15,12 @@ function Register() {
 
   // 返回首页
   const handleBack = () => {
-    Taro.navigateBack({
-      fail: () => {
-        Taro.redirectTo({ url: '/pages/index/index' })
-      }
-    })
+    const pages = Taro.getCurrentPages()
+    if (pages.length > 1) {
+      Taro.navigateBack()
+    } else {
+      Taro.reLaunch({ url: '/pages/index/index' })
+    }
   }
 
   // 注册
@@ -60,7 +61,12 @@ function Register() {
       
       // 延迟跳转到登录页
       setTimeout(() => {
-        Taro.navigateBack()
+        const pages = Taro.getCurrentPages()
+        if (pages.length > 1) {
+          Taro.navigateBack()
+        } else {
+          Taro.reLaunch({ url: '/pages/index/index' })
+        }
       }, 1500)
     } catch (error) {
       console.error('注册失败:', error)
